@@ -388,7 +388,7 @@ git commit -m "Add structured public meetup prompts"
 **Files:**
 - Verify: entire repository
 
-- [ ] **Step 1: Run the full verification gate**
+- [x] **Step 1: Run the full verification gate**
 
 Run these commands sequentially:
 
@@ -407,7 +407,7 @@ git status --short --branch
 
 Expected: every command exits 0 and the release state remains `PYTHON_RND_SYNTHETIC_ONLY`.
 
-- [ ] **Step 2: Push and wait for CI**
+- [x] **Step 2: Push and wait for CI**
 
 Run:
 
@@ -418,6 +418,6 @@ gh pr checks 1 --watch --interval 10
 
 Expected: the draft PR updates and both Python 3.12 and 3.13 jobs pass.
 
-- [ ] **Step 3: Refresh the PR evidence**
+- [x] **Step 3: Refresh the PR evidence**
 
 Update draft PR #1 with the new test count, measured coverage, meetup behavior, and unchanged safety boundary. Preserve the worktree for the next narrow loop.
