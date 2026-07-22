@@ -17,6 +17,7 @@ from swipe_dating.domain.conversations import (
     receive_synthetic_reply,
     record_interest,
     record_pass,
+    send_meetup_proposal,
     send_message,
     undo_last_decision,
     unmatch_conversation,
@@ -210,6 +211,17 @@ class ResearchSession:
         self._require_adult()
         result = receive_synthetic_reply(
             self.conversations, match_id=match_id, text=text, at_ms=self.clock()
+        )
+        self.conversations = result.state
+        return result.value
+
+    def propose_meetup(self, match_id: str, suggestion_id: str) -> Message:
+        self._require_adult()
+        result = send_meetup_proposal(
+            self.conversations,
+            match_id=match_id,
+            suggestion_id=suggestion_id,
+            at_ms=self.clock(),
         )
         self.conversations = result.state
         return result.value

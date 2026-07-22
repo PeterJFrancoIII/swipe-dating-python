@@ -6,12 +6,14 @@ from swipe_dating.domain.conversations import (
     CandidateSnapshot,
     MatchStatus,
     block_conversation,
+    build_meetup_suggestions,
     build_starter_suggestions,
     create_conversation_state,
     get_suppressed_candidate_ids,
     receive_synthetic_reply,
     record_interest,
     record_pass,
+    send_meetup_proposal,
     send_message,
     undo_last_decision,
     unmatch_conversation,
@@ -171,3 +173,80 @@ def test_starter_suggestions_are_grounded_in_visible_tag() -> None:
     suggestions = build_starter_suggestions(created.state.matches[str(created.outcome["match_id"])])
     assert len(suggestions) == 3
     assert all("hiking" in suggestion for suggestion in suggestions)
+
+
+def test_meetup_suggestions_are_grounded_public_and_location_free() -> None:
+    created = matched()
+    match = created.state.matches[str(created.outcome["match_id"])]
+
+    suggestions = build_meetup_suggestions(match)
+
+    assert [suggestion.id for suggestion in suggestions] == [
+        "coffee_public",
+        "museum_daytime",
+        "public_activity",
+    ]
+    assert all("hiking" in suggestion.prompt for suggestion in suggestions)
+    assert all("public" in suggestion.prompt for suggestion in suggestions)
+    assert all("no location has been shared" in suggestion.prompt for suggestion in suggestions)
+
+
+def test_meetup_proposal_requires_two_way_conversation() -> None:
+    created = matched()
+    match_id = str(created.outcome["match_id"])
+    opened = send_message(
+        created.state,
+        match_id=match_id,
+        text="What trail do you like?",
+        shared_ground_tag="hiking",
+        at_ms=AT,
+    )
+    with pytest.raises(DomainError, match="meetup_requires_two_way_conversation"):
+        send_meetup_proposal(
+            opened.state,
+            match_id=match_id,
+            suggestion_id="coffee_public",
+            at_ms=AT + 1,
+        )
+    replied = receive_synthetic_reply(
+        opened.state,
+        match_id=match_id,
+        text="I like the river loop.",
+        at_ms=AT + 1,
+    )
+
+    proposed = send_meetup_proposal(
+        replied.state,
+        match_id=match_id,
+        suggestion_id="coffee_public",
+        at_ms=AT + 2,
+    )
+
+    assert proposed.value.sender == "local"
+    assert proposed.value.body.startswith("Would you like to meet for coffee")
+    assert proposed.state.matches[match_id].messages[-1] == proposed.value
+
+
+def test_unknown_meetup_suggestion_is_rejected() -> None:
+    created = matched()
+    match_id = str(created.outcome["match_id"])
+    opened = send_message(
+        created.state,
+        match_id=match_id,
+        text="Opening",
+        shared_ground_tag="hiking",
+        at_ms=AT,
+    )
+    replied = receive_synthetic_reply(
+        opened.state,
+        match_id=match_id,
+        text="Reply",
+        at_ms=AT + 1,
+    )
+    with pytest.raises(DomainError, match="unknown_meetup_suggestion"):
+        send_meetup_proposal(
+            replied.state,
+            match_id=match_id,
+            suggestion_id="private_address",
+            at_ms=AT + 2,
+        )

@@ -12,7 +12,7 @@
 
 **Rebuild plan:** [2026-07-22-python-rnd-rebuild.md](../superpowers/plans/2026-07-22-python-rnd-rebuild.md)
 
-**Current loop:** [2026-07-22-discovery-ranking-controls.md](../superpowers/plans/2026-07-22-discovery-ranking-controls.md)
+**Current loop:** [2026-07-22-structured-meetup-prompts.md](../superpowers/plans/2026-07-22-structured-meetup-prompts.md)
 
 **Evidence required:** unit/property/contract/integration/smoke tests, coverage, compile, Ruff, mypy, deterministic simulation, governance checks, clean diff, and GitHub Actions.
 

@@ -28,6 +28,7 @@ from swipe_dating.adapters.storage import JsonFileStorageAdapter, LocalStateRepo
 from swipe_dating.application.session import APP_TABS, ResearchSession
 from swipe_dating.domain.conversations import (
     MatchStatus,
+    build_meetup_suggestions,
     build_starter_suggestions,
     list_matches,
 )
@@ -511,6 +512,41 @@ class SwipeDatingDesktop:
                             "Receive synthetic reply",
                             lambda match_id=match.id: self._receive_reply(match_id),
                         ).pack(side="left")
+                        candidate_messages = [
+                            message for message in match.messages if message.sender == "candidate"
+                        ]
+                        meetup = tk.Frame(card, bg=PANEL, padx=14, pady=14)
+                        meetup.pack(fill="x", pady=(14, 0))
+                        self._text(
+                            meetup,
+                            "Suggest a public meetup",
+                            bg=PANEL,
+                            size=16,
+                            weight="bold",
+                        ).pack(anchor="w")
+                        self._text(
+                            meetup,
+                            "A suggestion is not consent to meet and shares no location. Exchange at least one message each first.",
+                            bg=PANEL,
+                            color=MUTED,
+                            wrap=880,
+                        ).pack(anchor="w", pady=(4, 8))
+                        if candidate_messages:
+                            for meetup_suggestion in build_meetup_suggestions(match):
+                                self._button(
+                                    meetup,
+                                    meetup_suggestion.title,
+                                    lambda suggestion_id=meetup_suggestion.id, match_id=match.id: (
+                                        self._send_meetup(match_id, suggestion_id)
+                                    ),
+                                ).pack(fill="x", pady=3)
+                        else:
+                            self._text(
+                                meetup,
+                                "Meetup suggestions unlock after a synthetic reply.",
+                                bg=PANEL,
+                                color=AMBER,
+                            ).pack(anchor="w")
             self._render_deepen_panel(card, match.id)
             actions = tk.Frame(card, bg=CARD)
             actions.pack(fill="x", pady=(14, 0))
@@ -895,6 +931,14 @@ class SwipeDatingDesktop:
             return
         self._render_active_tab()
 
+    def _send_meetup(self, match_id: str, suggestion_id: str) -> None:
+        try:
+            self.session.propose_meetup(match_id, suggestion_id)
+        except DomainError as error:
+            self._show_domain_error(error)
+            return
+        self._render_active_tab()
+
     def _send_free(self, match_id: str, widget: tk.Text) -> None:
         try:
             self.session.send_message(match_id, widget.get("1.0", "end").strip())
@@ -1094,6 +1138,8 @@ class SwipeDatingDesktop:
             "answer_required": "Enter an answer first.",
             "answer_too_long": "Deeper answers are limited to 300 characters.",
             "match_not_active": "This match is no longer active.",
+            "meetup_requires_two_way_conversation": "Exchange at least one message each before suggesting a meetup.",
+            "unknown_meetup_suggestion": "Choose one of the available public meetup suggestions.",
         }
         messagebox.showerror("Action unavailable", messages.get(error.code, error.code))
 

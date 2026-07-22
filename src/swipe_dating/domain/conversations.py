@@ -55,6 +55,13 @@ class Message:
 
 
 @dataclass(frozen=True, slots=True)
+class MeetupSuggestion:
+    id: str
+    title: str
+    prompt: str
+
+
+@dataclass(frozen=True, slots=True)
 class ConversationMatch:
     id: str
     candidate: CandidateSnapshot
@@ -306,6 +313,54 @@ def build_starter_suggestions(match: ConversationMatch) -> tuple[str, ...]:
         "What would a good first conversation look like for you?",
         f"We matched around {label}. Is there anything you want to clarify before we keep talking?",
     )
+
+
+def build_meetup_suggestions(match: ConversationMatch) -> tuple[MeetupSuggestion, ...]:
+    if match.status is not MatchStatus.ACTIVE:
+        raise DomainError("match_not_active")
+    if not match.starter_tag:
+        raise DomainError("match_starter_missing")
+    label = match.starter_tag.replace("_", " ")
+    safety = "This is only a proposal; no location has been shared."
+    return (
+        MeetupSuggestion(
+            "coffee_public",
+            "Coffee in a public place",
+            f"Would you like to meet for coffee in a public place and keep talking about "
+            f"{label}? {safety}",
+        ),
+        MeetupSuggestion(
+            "museum_daytime",
+            "Daytime public museum visit",
+            f"Would you like to visit a public museum during daytime hours and keep talking "
+            f"about {label}? {safety}",
+        ),
+        MeetupSuggestion(
+            "public_activity",
+            "Low-pressure public activity",
+            "Would you like to choose a low-pressure activity in a well-populated public "
+            f"place and keep talking about {label}? {safety}",
+        ),
+    )
+
+
+def send_meetup_proposal(
+    state: ConversationState,
+    *,
+    match_id: str,
+    suggestion_id: str,
+    at_ms: int | float | None = None,
+) -> ValueResult[ConversationState, Message]:
+    match = _require_active_match(state, match_id)
+    senders = {message.sender for message in match.messages}
+    if not {"local", "candidate"}.issubset(senders):
+        raise DomainError("meetup_requires_two_way_conversation")
+    suggestions = {suggestion.id: suggestion for suggestion in build_meetup_suggestions(match)}
+    try:
+        suggestion = suggestions[suggestion_id]
+    except KeyError as error:
+        raise DomainError("unknown_meetup_suggestion") from error
+    return send_message(state, match_id=match_id, text=suggestion.prompt, at_ms=at_ms)
 
 
 def list_matches(state: ConversationState) -> tuple[ConversationMatch, ...]:

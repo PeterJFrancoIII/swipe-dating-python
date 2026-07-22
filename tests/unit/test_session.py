@@ -102,6 +102,22 @@ def test_match_message_deepen_and_unmatch_are_coordinated_in_memory() -> None:
     assert adapter.inspect() is None
 
 
+def test_meetup_proposal_is_session_only_and_purged_on_block() -> None:
+    session, adapter = create_session()
+    session.accept_adult_gate("2000-01-01")
+    outcome = session.express_interest("p1", "hiking")
+    match_id = str(outcome["match_id"])
+    session.send_message(match_id, "What trail do you like?", "hiking")
+    session.receive_synthetic_reply(match_id, "I like the river loop.")
+
+    proposal = session.propose_meetup(match_id, "coffee_public")
+
+    assert "public place" in proposal.body
+    assert adapter.inspect() is None
+    session.block(match_id)
+    assert session.conversations.matches[match_id].messages == ()
+
+
 def test_block_purges_content_and_suppresses_candidate() -> None:
     session, _adapter = create_session()
     session.accept_adult_gate("2000-01-01")

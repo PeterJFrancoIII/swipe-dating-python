@@ -11,7 +11,7 @@
 | `rnd-domain/risk.js` | `domain/risk.py` | Verified |
 | `rnd-domain/skin-shop.js` | `domain/skin_shop.py` | Verified validation; catalog remains mock |
 | `rnd-discovery` | `domain/discovery.py` | Verified, including bounded interactive ranking controls |
-| `rnd-conversations` | `domain/conversations.py` | Verified session-only behavior |
+| `rnd-conversations` | `domain/conversations.py` | Verified session-only behavior, including structured public-meetup prompts |
 | `rnd-relationship-phases` | `domain/relationship_phases.py` | Verified session-only behavior |
 | `rnd-storage` | `domain/local_state.py` | Verified strict allowlist |
 | `rnd-crypto-node` | `adapters/crypto/identifiers.py` | Golden-vector verified; synthetic helper only |
