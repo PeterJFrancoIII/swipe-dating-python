@@ -1,0 +1,80 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "swipe-dating-rnd"
+version = "0.1.0"
+description = "Synthetic-only Python recreation of the Swipe Dating R&D app"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary research prototype" }
+authors = [{ name = "Swipe Dating R&D" }]
+dependencies = [
+  "fastapi>=0.115,<1",
+  "pydantic>=2.9,<3",
+  "uvicorn>=0.30,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.27,<1",
+  "hypothesis>=6,<7",
+  "mypy>=1.13,<2",
+  "pytest>=8,<10",
+  "pytest-cov>=5,<8",
+  "ruff>=0.9,<1",
+]
+
+[project.scripts]
+swipe-api = "swipe_dating.api.run:main"
+swipe-desktop = "swipe_dating.desktop.app:main"
+swipe-governance = "swipe_dating.governance.checks:main"
+swipe-simulate = "swipe_dating.simulation.run:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/swipe_dating"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["swipe_dating"]
+omit = [
+  "src/swipe_dating/api/run.py",
+  "src/swipe_dating/desktop/*",
+]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["A", "ASYNC", "B", "C4", "E", "F", "I", "N", "PERF", "PIE", "PL", "RUF", "S", "SIM", "UP"]
+ignore = ["PLR0913", "PLR2004", "S105"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["RUF001", "S101", "S106"]
+"src/swipe_dating/fixtures.py" = ["RUF001"]
+"src/swipe_dating/desktop/app.py" = ["E501", "PLR0912", "PLR0915", "RUF001"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = ["uvicorn"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["swipe_dating.desktop.app"]
+disable_error_code = ["misc"]

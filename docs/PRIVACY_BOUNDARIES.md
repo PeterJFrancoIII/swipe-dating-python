@@ -1,0 +1,16 @@
+# Privacy boundaries
+
+## Allowed in the unencrypted local R&D file
+
+- display name (64 characters);
+- about text (500 characters);
+- optional pronouns (40 characters);
+- up to 50 synthetic cosmetic identifiers and the selected owned cosmetic;
+- haptic-feedback preference;
+- last non-sensitive tab, excluding Matches.
+
+## Session-only
+
+Birth date and adult-gate result; credentials; intent; gender-feed settings; boundaries; ranking weights/history; questionnaire answers; decisions; likes; reciprocal fixtures; matches; opener tags; messages; transcripts; relationship phases and deeper answers; blocks; reports; proximity; encounters; location grants; identifiers; keys; secrets; payments; payouts; and the Matches tab.
+
+This R&D file is unencrypted and is not suitable for real users. A real-user build requires an externally reviewed encrypted vault, key custody, backup/recovery, transfer, deletion/export, corruption, reinstall, and key-loss behavior.
