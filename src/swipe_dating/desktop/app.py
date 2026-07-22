@@ -44,6 +44,7 @@ from swipe_dating.domain.preferences import (
     GENDER_DISCOVERY_CATEGORIES,
     LOOKING_FOR_MODES,
 )
+from swipe_dating.domain.profile_readiness import MIN_PROFILE_ABOUT_CHARS
 from swipe_dating.domain.proximity import ProximityDisclosure
 from swipe_dating.domain.relationship_phases import RelationshipPhase
 from swipe_dating.fixtures import (
@@ -702,6 +703,7 @@ class SwipeDatingDesktop:
             color=MUTED,
             wrap=940,
         ).pack(anchor="w", pady=(0, 12))
+        self._render_profile_readiness(card)
         state = self.session.local_state
         display_name = self._field(card, "Display name", state.profile.display_name)
         pronouns = self._field(card, "Pronouns (optional)", state.profile.pronouns)
@@ -751,6 +753,41 @@ class SwipeDatingDesktop:
             export.insert("1.0", self._export_preview)
             export.configure(state="disabled")
             export.pack(fill="x", pady=(12, 0))
+
+    def _render_profile_readiness(self, parent: tk.Widget) -> None:
+        readiness = self.session.profile_readiness()
+        panel = tk.Frame(parent, bg=PANEL, padx=14, pady=12)
+        panel.pack(fill="x", pady=(0, 12))
+        self._text(
+            panel,
+            f"{readiness.completed_count} of {readiness.total_count} profile basics complete",
+            bg=PANEL,
+            color=MINT if readiness.ready else AMBER,
+            weight="bold",
+        ).pack(anchor="w")
+        self._text(
+            panel,
+            "Advisory only: this checks supplied context, does not predict matches or profile quality, and adds no stored field.",
+            bg=PANEL,
+            color=MUTED,
+            wrap=900,
+        ).pack(anchor="w", pady=(3, 8))
+        labels = (
+            ("display_name", "Display name supplied"),
+            (
+                "about_context",
+                f"About includes at least {MIN_PROFILE_ABOUT_CHARS} self-authored characters",
+            ),
+        )
+        completed = set(readiness.completed)
+        for item, label in labels:
+            is_complete = item in completed
+            self._text(
+                panel,
+                f"{'✓' if is_complete else '○'} {label}",
+                bg=PANEL,
+                color=MINT if is_complete else TEXT,
+            ).pack(anchor="w", pady=2)
 
     def _render_preferences(self) -> None:
         looking = self._card("Looking For")

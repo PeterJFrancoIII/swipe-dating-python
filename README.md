@@ -7,7 +7,7 @@ This repository includes:
 - framework-independent adult, discovery, matching, conversation, relationship-phase, proximity, location-grant, risk, marketplace, and storage rules;
 - a synthetic in-memory FastAPI adapter;
 - a deterministic scenario simulator;
-- a Tkinter desktop app for laptop research;
+- a Tkinter desktop app with bio-first discovery, adjustable ranking, meetup prompts, and an advisory profile-readiness checklist;
 - executable privacy and governance checks.
 
 It does **not** provide real authentication, age assurance, users, Bluetooth scanning, location collection, network messaging, E2EE, billing, moderation operations, or production deployment.

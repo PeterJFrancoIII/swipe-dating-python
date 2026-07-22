@@ -33,6 +33,7 @@ from swipe_dating.domain.discovery import (
 )
 from swipe_dating.domain.errors import DomainError
 from swipe_dating.domain.local_state import LocalCosmetics, LocalProfile, LocalState, LocalUi
+from swipe_dating.domain.profile_readiness import ProfileReadiness, assess_profile_readiness
 from swipe_dating.domain.proximity import (
     ProximityDecision,
     ProximityDisclosure,
@@ -332,6 +333,10 @@ class ResearchSession:
             profile=LocalProfile(display_name, about, pronouns),
         )
         return self._persist()
+
+    def profile_readiness(self) -> ProfileReadiness:
+        profile = self.local_state.profile
+        return assess_profile_readiness(profile.display_name, profile.about)
 
     def set_haptics(self, enabled: bool) -> LocalState:
         self.local_state = replace(

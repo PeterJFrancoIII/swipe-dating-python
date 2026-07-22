@@ -155,6 +155,18 @@ def test_only_allowlisted_profile_cosmetic_and_safe_tab_state_persists() -> None
     assert set(raw) == {"schemaVersion", "savedAt", "profile", "cosmetics", "ui"}
 
 
+def test_profile_readiness_is_derived_and_never_persisted() -> None:
+    session, adapter = create_session()
+    session.update_profile(display_name="Riley", about="x" * 80, pronouns="")
+
+    readiness = session.profile_readiness()
+
+    assert readiness.ready is True
+    raw = json.loads(adapter.inspect())
+    assert "readiness" not in raw
+    assert set(raw["profile"]) == {"displayName", "about", "pronouns"}
+
+
 def test_pass_undo_restores_candidate() -> None:
     session, _adapter = create_session()
     session.accept_adult_gate("2000-01-01")
