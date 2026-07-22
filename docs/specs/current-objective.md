@@ -12,7 +12,7 @@
 
 **Rebuild plan:** [2026-07-22-python-rnd-rebuild.md](../superpowers/plans/2026-07-22-python-rnd-rebuild.md)
 
-**Current loop:** [2026-07-22-consent-state-sequences.md](../superpowers/plans/2026-07-22-consent-state-sequences.md)
+**Current loop:** [2026-07-22-visible-boundary-tags.md](../superpowers/plans/2026-07-22-visible-boundary-tags.md)
 
 **Evidence required:** unit/property/contract/integration/smoke tests, coverage, compile, Ruff, mypy, deterministic simulation, governance checks, clean diff, and GitHub Actions.
 

@@ -151,6 +151,10 @@ class ResearchSession:
         queue = self.discovery_queue()
         return queue[0] if queue else None
 
+    def visible_starter_tags(self, candidate_id: str) -> tuple[str, ...]:
+        candidate = self._candidate(candidate_id)
+        return tuple(dict.fromkeys((*candidate.lifestyle_tags, *candidate.boundaries)))
+
     def reveal_stage(self, candidate_id: str) -> str:
         candidate = self._candidate(candidate_id)
         initial = evaluate_discovery_candidate(
@@ -172,8 +176,7 @@ class ResearchSession:
     def express_interest(self, candidate_id: str, starter_tag: str) -> Mapping[str, object]:
         self._require_adult()
         candidate = self._candidate(candidate_id)
-        visible_tags = {*candidate.lifestyle_tags, *candidate.boundaries}
-        if starter_tag not in visible_tags:
+        if starter_tag not in self.visible_starter_tags(candidate_id):
             raise DomainError("shared_ground_not_visible")
         result = record_interest(
             self.conversations,

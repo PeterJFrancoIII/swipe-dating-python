@@ -123,7 +123,7 @@ uv pip check
 git diff --check
 ```
 
-- [ ] **Step 4: Commit, push, and wait for both GitHub lanes**
+- [x] **Step 4: Commit, push, and wait for both GitHub lanes**
 
 ```bash
 git add docs/specs/current-objective.md docs/superpowers/plans/2026-07-22-consent-state-sequences.md tests/property/test_consent_state_sequences.py

@@ -1,27 +1,71 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 
 import pytest
 
 from swipe_dating.adapters.storage import LocalStateRepository, MemoryStorageAdapter
 from swipe_dating.application.session import ResearchSession
 from swipe_dating.domain.conversations import MatchStatus
-from swipe_dating.domain.discovery import DEFAULT_RANKING_WEIGHTS
+from swipe_dating.domain.discovery import DEFAULT_RANKING_WEIGHTS, DiscoveryProfile
 from swipe_dating.domain.errors import DomainError
 from swipe_dating.domain.relationship_phases import RelationshipPhase
+from swipe_dating.fixtures import SYNTHETIC_PROFILES
 
 NOW = 1_753_185_600_000
 
 
-def create_session() -> tuple[ResearchSession, MemoryStorageAdapter]:
+def create_session(
+    profiles: tuple[DiscoveryProfile, ...] = SYNTHETIC_PROFILES,
+) -> tuple[ResearchSession, MemoryStorageAdapter]:
     adapter = MemoryStorageAdapter()
     session = ResearchSession(
         repository=LocalStateRepository(adapter),
         clock=lambda: NOW,
         today="2026-07-22",
+        profiles=profiles,
     )
     return session, adapter
+
+
+def test_visible_starter_tags_include_public_boundaries_not_private_filters() -> None:
+    candidate = replace(
+        SYNTHETIC_PROFILES[0],
+        id="p-visible",
+        lifestyle_tags=("public_first_meet", "coffee"),
+        boundaries=("public_first_meet", "condoms_required"),
+        required_boundaries=("private_required_filter",),
+    )
+    session, _adapter = create_session((candidate,))
+
+    assert session.visible_starter_tags("p-visible") == (
+        "public_first_meet",
+        "coffee",
+        "condoms_required",
+    )
+    assert "private_required_filter" not in session.visible_starter_tags("p-visible")
+
+
+def test_public_boundary_can_start_match_but_private_filter_cannot() -> None:
+    candidate = replace(
+        SYNTHETIC_PROFILES[0],
+        id="p-visible",
+        boundaries=("public_first_meet", "condoms_required"),
+        required_boundaries=("private_required_filter",),
+    )
+    session, _adapter = create_session((candidate,))
+    session.accept_adult_gate("2000-01-01")
+
+    outcome = session.express_interest("p-visible", "condoms_required")
+
+    match_id = str(outcome["match_id"])
+    assert session.conversations.matches[match_id].starter_tag == "condoms_required"
+
+    private_session, _adapter = create_session((candidate,))
+    private_session.accept_adult_gate("2000-01-01")
+    with pytest.raises(DomainError, match="shared_ground_not_visible"):
+        private_session.express_interest("p-visible", "private_required_filter")
 
 
 def test_adult_gate_and_discovery_reveal() -> None:

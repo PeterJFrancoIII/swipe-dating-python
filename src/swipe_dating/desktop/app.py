@@ -37,6 +37,7 @@ from swipe_dating.domain.discovery import (
     IMMEDIATE_INTENTS,
     RANKING_DIMENSIONS,
     RELATIONAL_OPENNESS,
+    DiscoveryProfile,
 )
 from swipe_dating.domain.errors import DomainError
 from swipe_dating.domain.location_grants import LocationMode
@@ -364,6 +365,7 @@ class SwipeDatingDesktop:
             weight="bold",
         ).pack(anchor="w", pady=(3, 12))
         self._text(candidate_card, candidate.about, wrap=900, size=16).pack(anchor="w")
+        self._render_candidate_boundaries(candidate_card, candidate)
         stage = self.session.reveal_stage(candidate.id)
         visual_text = (
             "Synthetic visual placeholder revealed — no real photograph is loaded."
@@ -406,7 +408,7 @@ class SwipeDatingDesktop:
         self._dynamic_variables.append(starter)
         tags = tk.Frame(candidate_card, bg=CARD)
         tags.pack(fill="x", pady=6)
-        for tag in candidate.lifestyle_tags:
+        for tag in self.session.visible_starter_tags(candidate.id):
             tk.Radiobutton(
                 tags,
                 text=self._label(tag),
@@ -431,6 +433,30 @@ class SwipeDatingDesktop:
         ).pack(side="left", padx=(0, 8))
         self._button(actions, "Pass", lambda: self._pass(candidate.id)).pack(side="left")
         self._button(actions, "Undo latest", self._undo).pack(side="right")
+
+    def _render_candidate_boundaries(self, parent: tk.Widget, candidate: DiscoveryProfile) -> None:
+        panel = tk.Frame(parent, bg=PANEL, padx=12, pady=10)
+        panel.pack(fill="x", pady=(12, 0))
+        self._text(
+            panel,
+            "Synthetic self-reported boundaries",
+            bg=PANEL,
+            color=MINT,
+            weight="bold",
+        ).pack(anchor="w")
+        self._text(
+            panel,
+            " · ".join(self._label(tag) for tag in candidate.boundaries),
+            bg=PANEL,
+            wrap=900,
+        ).pack(anchor="w", pady=3)
+        self._text(
+            panel,
+            "Not verified; discuss before relying on a tag. Private required filters remain hidden.",
+            bg=PANEL,
+            color=MUTED,
+            wrap=900,
+        ).pack(anchor="w")
 
     def _render_matches(self) -> None:
         heading = self._card("Matches and conversations")
