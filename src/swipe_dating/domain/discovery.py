@@ -134,16 +134,18 @@ def normalize_ranking_weights(
     if total == 0:
         return dict(DEFAULT_RANKING_WEIGHTS)
 
-    normalized: dict[str, int] = {}
-    assigned = 0
-    for index, key in enumerate(RANKING_DIMENSIONS):
-        value = (
-            100 - assigned
-            if index == len(RANKING_DIMENSIONS) - 1
-            else js_round(weights[key] / total * 100)
-        )
-        normalized[key] = value
-        assigned += value
+    exact = {key: weights[key] / total * 100 for key in RANKING_DIMENSIONS}
+    normalized = {key: math.floor(exact[key]) for key in RANKING_DIMENSIONS}
+    remaining = 100 - sum(normalized.values())
+    allocation_order = sorted(
+        enumerate(RANKING_DIMENSIONS),
+        key=lambda item: (
+            -(exact[item[1]] - normalized[item[1]]),
+            item[0],
+        ),
+    )
+    for _index, key in allocation_order[:remaining]:
+        normalized[key] += 1
     return normalized
 
 

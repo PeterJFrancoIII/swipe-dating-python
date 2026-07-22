@@ -56,6 +56,18 @@ def test_weights_normalize_to_exactly_one_hundred() -> None:
     )
 
 
+def test_weights_remain_bounded_when_earlier_dimensions_round_up() -> None:
+    assert normalize_ranking_weights(
+        {"intent": 0, "boundaries": 0, "lifestyle": 10, "alignment": 70, "distance": 0}
+    ) == {
+        "intent": 0,
+        "boundaries": 0,
+        "lifestyle": 13,
+        "alignment": 87,
+        "distance": 0,
+    }
+
+
 @pytest.mark.parametrize(
     ("override", "exclusion"),
     [

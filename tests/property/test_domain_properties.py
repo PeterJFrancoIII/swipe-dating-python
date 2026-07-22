@@ -16,7 +16,9 @@ from swipe_dating.domain.local_state import sanitize_local_state, serialize_loca
     )
 )
 def test_normalized_weights_always_total_one_hundred(values: dict[str, object]) -> None:
-    assert sum(normalize_ranking_weights(values).values()) == 100
+    normalized = normalize_ranking_weights(values)
+    assert sum(normalized.values()) == 100
+    assert all(0 <= value <= 100 for value in normalized.values())
 
 
 @given(
