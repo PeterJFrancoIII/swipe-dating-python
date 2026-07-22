@@ -157,7 +157,7 @@ git diff --check
 
 Expected: every command exits 0, coverage remains at least 90%, and the release state remains `PYTHON_RND_SYNTHETIC_ONLY`.
 
-- [ ] **Step 3: Commit and push the slice**
+- [x] **Step 3: Commit and push the slice**
 
 ```bash
 git add README.md docs/specs/current-objective.md docs/superpowers/plans/2026-07-22-profile-readiness.md src/swipe_dating/domain/profile_readiness.py src/swipe_dating/application/session.py src/swipe_dating/desktop/app.py tests/unit/test_profile_readiness.py tests/unit/test_session.py tests/smoke/test_desktop_import.py
@@ -165,7 +165,7 @@ git commit -m "Add advisory profile readiness"
 git push
 ```
 
-- [ ] **Step 4: Wait for both GitHub lanes and refresh the draft PR**
+- [x] **Step 4: Wait for both GitHub lanes and refresh the draft PR**
 
 Run: `gh pr checks 1 --watch --interval 10`
 
