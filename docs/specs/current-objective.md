@@ -10,7 +10,9 @@
 
 **Source of truth:** JavaScript repository commit `5c6b35e8b133f4b34224785eb4fc1e7ab61423a4` and the July 22, 2026 Python rebuild specification supplied with the Dating App project.
 
-**Plan:** [2026-07-22-python-rnd-rebuild.md](../superpowers/plans/2026-07-22-python-rnd-rebuild.md)
+**Rebuild plan:** [2026-07-22-python-rnd-rebuild.md](../superpowers/plans/2026-07-22-python-rnd-rebuild.md)
+
+**Current loop:** [2026-07-22-discovery-ranking-controls.md](../superpowers/plans/2026-07-22-discovery-ranking-controls.md)
 
 **Evidence required:** unit/property/contract/integration/smoke tests, coverage, compile, Ruff, mypy, deterministic simulation, governance checks, clean diff, and GitHub Actions.
 

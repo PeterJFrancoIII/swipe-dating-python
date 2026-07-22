@@ -7,6 +7,7 @@ import pytest
 from swipe_dating.adapters.storage import LocalStateRepository, MemoryStorageAdapter
 from swipe_dating.application.session import ResearchSession
 from swipe_dating.domain.conversations import MatchStatus
+from swipe_dating.domain.discovery import DEFAULT_RANKING_WEIGHTS
 from swipe_dating.domain.errors import DomainError
 from swipe_dating.domain.relationship_phases import RelationshipPhase
 
@@ -37,6 +38,36 @@ def test_adult_gate_and_discovery_reveal() -> None:
     assert session.reveal_stage("p1") == "bio_first"
     assert session.reveal_candidate("p1", "swipe_right") == "bio_first"
     assert session.reveal_candidate("p1", "inspect_tags") == "photo_revealed"
+
+
+def test_user_can_reweight_discovery_and_change_the_top_candidate() -> None:
+    session, _adapter = create_session()
+    for dimension in ("intent", "boundaries", "lifestyle", "distance"):
+        session.adjust_ranking_weight(dimension, -1_000)
+    session.adjust_ranking_weight("alignment", 1_000)
+
+    assert session.normalized_ranking_weights() == {
+        "intent": 0,
+        "boundaries": 0,
+        "lifestyle": 0,
+        "alignment": 100,
+        "distance": 0,
+    }
+    assert session.current_candidate().candidate.id == "p3"  # type: ignore[union-attr]
+
+
+def test_unknown_ranking_dimension_is_rejected() -> None:
+    session, _adapter = create_session()
+    with pytest.raises(DomainError, match="unknown_ranking_dimension"):
+        session.adjust_ranking_weight("attractiveness", 5)
+
+
+def test_user_can_reset_ranking_weights() -> None:
+    session, _adapter = create_session()
+    session.adjust_ranking_weight("alignment", 50)
+
+    assert session.reset_ranking_weights() == DEFAULT_RANKING_WEIGHTS
+    assert session.ranking_weights == DEFAULT_RANKING_WEIGHTS
 
 
 def test_match_message_deepen_and_unmatch_are_coordinated_in_memory() -> None:

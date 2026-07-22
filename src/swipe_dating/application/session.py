@@ -27,6 +27,7 @@ from swipe_dating.domain.discovery import (
     RankedCandidate,
     advance_profile_reveal,
     evaluate_discovery_candidate,
+    normalize_ranking_weights,
     rank_discovery_candidates,
 )
 from swipe_dating.domain.errors import DomainError
@@ -118,6 +119,21 @@ class ResearchSession:
             boundaries=selected_boundaries,
             required_boundaries=selected_boundaries,
         )
+
+    def normalized_ranking_weights(self) -> Mapping[str, int]:
+        return normalize_ranking_weights(self.ranking_weights)
+
+    def adjust_ranking_weight(self, dimension: str, delta: int) -> Mapping[str, int]:
+        try:
+            current = self.ranking_weights[dimension]
+        except KeyError as error:
+            raise DomainError("unknown_ranking_dimension") from error
+        self.ranking_weights[dimension] = max(0, min(100, current + delta))
+        return self.normalized_ranking_weights()
+
+    def reset_ranking_weights(self) -> Mapping[str, int]:
+        self.ranking_weights = dict(DEFAULT_RANKING_WEIGHTS)
+        return self.normalized_ranking_weights()
 
     def discovery_queue(self) -> tuple[RankedCandidate, ...]:
         suppressed = set(get_suppressed_candidate_ids(self.conversations))

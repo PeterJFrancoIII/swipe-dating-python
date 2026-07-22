@@ -34,6 +34,7 @@ from swipe_dating.domain.conversations import (
 from swipe_dating.domain.discovery import (
     BOUNDARY_TAGS,
     IMMEDIATE_INTENTS,
+    RANKING_DIMENSIONS,
     RELATIONAL_OPENNESS,
 )
 from swipe_dating.domain.errors import DomainError
@@ -258,6 +259,44 @@ class SwipeDatingDesktop:
                 activeforeground=TEXT,
             )
             check.pack(side="left", padx=(0, 8), pady=4)
+
+        algorithm = self._card("Choose your algorithm")
+        self._text(
+            algorithm,
+            "Tune only intent, boundaries, lifestyle, alignment, and distance. Values are normalized to 100% for this session; protected traits, purchases, and popularity are excluded.",
+            color=MUTED,
+            wrap=940,
+        ).pack(anchor="w", pady=(0, 8))
+        normalized_weights = self.session.normalized_ranking_weights()
+        for dimension in RANKING_DIMENSIONS:
+            row = tk.Frame(algorithm, bg=PANEL, padx=12, pady=8)
+            row.pack(fill="x", pady=3)
+            self._text(
+                row,
+                self._label(dimension),
+                bg=PANEL,
+                weight="bold",
+            ).pack(side="left")
+            self._button(
+                row,
+                "+5",
+                lambda key=dimension: self._adjust_ranking_weight(key, 5),
+            ).pack(side="right")
+            self._text(
+                row,
+                f"{normalized_weights[dimension]}%",
+                bg=PANEL,
+                color=MINT,
+                weight="bold",
+            ).pack(side="right", padx=10)
+            self._button(
+                row,
+                "−5",
+                lambda key=dimension: self._adjust_ranking_weight(key, -5),
+            ).pack(side="right")
+        self._button(algorithm, "Reset weights", self._reset_ranking_weights).pack(
+            anchor="w", pady=(8, 0)
+        )
 
         proximity = self._card("Get fk’d — proximity simulation")
         self._text(
@@ -792,6 +831,14 @@ class SwipeDatingDesktop:
             self.session.required_boundaries.add(boundary)
         else:
             self.session.required_boundaries.discard(boundary)
+        self._render_active_tab()
+
+    def _adjust_ranking_weight(self, dimension: str, delta: int) -> None:
+        self.session.adjust_ranking_weight(dimension, delta)
+        self._render_active_tab()
+
+    def _reset_ranking_weights(self) -> None:
+        self.session.reset_ranking_weights()
         self._render_active_tab()
 
     def _simulate_proximity(self) -> None:
