@@ -1,1 +1,0 @@
-"""Tkinter laptop research client."""

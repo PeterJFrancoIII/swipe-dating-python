@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Final
 
+from swipe_dating.domain.bot_moderation import CommunityMember
 from swipe_dating.domain.discovery import (
     IMMEDIATE_INTENTS,
     RELATIONAL_OPENNESS,
@@ -126,6 +128,70 @@ SYNTHETIC_PROFILES: Final = (
         synthetic_reciprocal_like=True,
     ),
 )
+
+SYNTHETIC_COMMUNITY_MEMBERS: Final = (
+    CommunityMember(
+        id=LOCAL_VIEWER.id,
+        adult_eligible=True,
+        verified=False,
+        account_age_days=30,
+        good_standing=True,
+        trust_cluster_id="local-browser",
+    ),
+    CommunityMember(
+        id="reviewer-ava",
+        adult_eligible=True,
+        verified=True,
+        account_age_days=920,
+        good_standing=True,
+        trust_cluster_id="trusted-device-ava",
+    ),
+    CommunityMember(
+        id="reviewer-noah",
+        adult_eligible=True,
+        verified=True,
+        account_age_days=640,
+        good_standing=True,
+        trust_cluster_id="trusted-device-noah",
+    ),
+    CommunityMember(
+        id="reviewer-sam",
+        adult_eligible=True,
+        verified=True,
+        account_age_days=410,
+        good_standing=True,
+        trust_cluster_id="trusted-device-sam",
+    ),
+)
+
+SYNTHETIC_BOT_SIGNALS: Final[Mapping[str, Mapping[str, object]]] = {
+    "p1": {
+        "adultCredentialValid": True,
+        "attestation": "hardware_backed",
+        "discoveryRequestsMinute": 4,
+        "likesMinute": 2,
+    },
+    "p2": {
+        "adultCredentialValid": True,
+        "attestation": "software_fallback",
+        "discoveryRequestsMinute": 180,
+        "profileFetchesMinute": 150,
+        "likesMinute": 90,
+        "maliciousLinkHits24h": 1,
+    },
+    "p3": {
+        "adultCredentialValid": True,
+        "attestation": "hardware_backed",
+        "discoveryRequestsMinute": 8,
+        "likesMinute": 3,
+    },
+}
+
+SYNTHETIC_BOT_TRUTH: Final[Mapping[str, bool]] = {
+    "p1": False,
+    "p2": True,
+    "p3": False,
+}
 
 SKIN_ITEMS: Final = (
     ("neon-orbit", "Neon Orbit", "Profile skin", "$1.99 mock"),

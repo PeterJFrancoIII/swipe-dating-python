@@ -7,10 +7,12 @@ import pytest
 
 from swipe_dating.adapters.storage import LocalStateRepository, MemoryStorageAdapter
 from swipe_dating.application.session import ResearchSession
+from swipe_dating.domain.bot_moderation import CaseStatus, ReportReason, VoteChoice
 from swipe_dating.domain.conversations import MatchStatus
 from swipe_dating.domain.discovery import DEFAULT_RANKING_WEIGHTS, DiscoveryProfile
 from swipe_dating.domain.errors import DomainError
 from swipe_dating.domain.relationship_phases import RelationshipPhase
+from swipe_dating.domain.risk import RiskAction
 from swipe_dating.fixtures import SYNTHETIC_PROFILES
 
 NOW = 1_753_185_600_000
@@ -70,10 +72,12 @@ def test_public_boundary_can_start_match_but_private_filter_cannot() -> None:
 
 def test_adult_gate_and_discovery_reveal() -> None:
     session, _adapter = create_session()
+    with pytest.raises(DomainError, match="birth_date_invalid"):
+        session.accept_adult_gate("01/01/2000")
     with pytest.raises(DomainError, match="adult_only"):
         session.accept_adult_gate("2009-07-22")
     assert session.adult_accepted is False
-    session.accept_adult_gate("2000-01-01")
+    session.accept_adult_gate("  2000-01-01  ")
     assert session.adult_accepted is True
     assert session.birth_date == "2000-01-01"
 
@@ -82,6 +86,63 @@ def test_adult_gate_and_discovery_reveal() -> None:
     assert session.reveal_stage("p1") == "bio_first"
     assert session.reveal_candidate("p1", "swipe_right") == "bio_first"
     assert session.reveal_candidate("p1", "inspect_tags") == "photo_revealed"
+
+
+def test_crowd_bot_review_contains_then_restores_a_synthetic_human() -> None:
+    session, adapter = create_session()
+    session.accept_adult_gate("2000-01-01")
+
+    case = session.report_suspected_bot("p1", ReportReason.AUTOMATION_PATTERN)
+    session.vote_on_bot_case(case.id, "reviewer-ava", VoteChoice.SUSPICIOUS)
+    session.vote_on_bot_case(case.id, "reviewer-noah", VoteChoice.LIKELY_HUMAN)
+    contained = session.vote_on_bot_case(
+        case.id,
+        "reviewer-sam",
+        VoteChoice.SUSPICIOUS,
+    )
+
+    assert contained.status is CaseStatus.TEMPORARILY_CONTAINED
+    assert all(item.candidate.id != "p1" for item in session.discovery_queue())
+    session.appeal_bot_containment(case.id)
+    adjudicated = session.run_synthetic_adjudication(case.id)
+    assert adjudicated.status is CaseStatus.ADJUDICATED_HUMAN
+    assert any(item.candidate.id == "p1" for item in session.discovery_queue())
+    assert session.moderation_state.members["reviewer-ava"].moderation_reputation == 80
+    assert adapter.inspect() is None
+
+
+def test_automated_bot_risk_contains_and_blocks_stale_interest() -> None:
+    session, _adapter = create_session()
+    with pytest.raises(DomainError, match="adult_gate_required"):
+        session.report_suspected_bot("p2", ReportReason.SUSPICIOUS_LINK)
+    session.accept_adult_gate("2000-01-01")
+
+    case = session.report_suspected_bot("p2", ReportReason.SUSPICIOUS_LINK)
+
+    assert case.status is CaseStatus.TEMPORARILY_CONTAINED
+    assert {reviewer.id for reviewer in session.eligible_reviewers(case.id)} == {
+        "reviewer-ava",
+        "reviewer-noah",
+        "reviewer-sam",
+    }
+    assert all(item.candidate.id != "p2" for item in session.discovery_queue())
+    with pytest.raises(DomainError, match="candidate_temporarily_contained"):
+        session.express_interest("p2", "live_music")
+
+
+def test_missing_bot_risk_evidence_fails_closed() -> None:
+    unknown = replace(SYNTHETIC_PROFILES[0], id="profile-without-risk-fixture")
+    session, _adapter = create_session((unknown,))
+    session.accept_adult_gate("2000-01-01")
+
+    case = session.report_suspected_bot(
+        unknown.id,
+        ReportReason.AUTOMATION_PATTERN,
+    )
+
+    assert case.risk_action is RiskAction.DENY
+    assert case.risk_reasons == ("adult_credential_invalid",)
+    assert case.contained is True
 
 
 def test_user_can_reweight_discovery_and_change_the_top_candidate() -> None:

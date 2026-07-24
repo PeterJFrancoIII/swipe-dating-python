@@ -175,7 +175,7 @@ def _as_mapping(value: object) -> Mapping[str, object]:
 
 
 def _clean_string(value: object, max_length: int) -> str:
-    return value.strip()[:max_length] if isinstance(value, str) else ""
+    return value.strip()[:max_length].rstrip() if isinstance(value, str) else ""
 
 
 def _unique_strings(value: object, max_items: int, max_length: int) -> tuple[str, ...]:

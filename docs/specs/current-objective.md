@@ -1,23 +1,48 @@
-# Current objective — Python R&D reconstruction
+# Current objective — bot-control web MVP
 
 **Status:** ACTIVE
-**Branch:** `agent/python-rnd-rebuild`
+**Branch:** `agent/warm-web-polish`
 **Real users:** Prohibited
 
 ## Mission Control Packet
 
-**Mission:** Recreate the supplied Swipe Dating app in Python for laptop R&D and deliver it to `PeterJFrancoIII/swipe-dating-python` without weakening consent, privacy, safety, or release controls.
+**Mission:** Deliver a simple local Python web app that makes community-driven bot control the
+primary product loop without weakening consent, privacy, safety, or release controls.
 
-**Source of truth:** JavaScript repository commit `5c6b35e8b133f4b34224785eb4fc1e7ab61423a4` and the July 22, 2026 Python rebuild specification supplied with the Dating App project.
+**Active UI:** FastAPI + Jinja, launched with `uv run swipe-web` on macOS.
 
-**Rebuild plan:** [2026-07-22-python-rnd-rebuild.md](../superpowers/plans/2026-07-22-python-rnd-rebuild.md)
+**Presentation baseline:** Warm light, system-font, server-rendered UI with a blank native date
+control, visible keyboard focus, skip navigation, truthful synthetic markers, and verified
+390/768/1440 responsive layouts. No remote UI assets or JavaScript framework.
 
-**Current loop:** [2026-07-22-visible-boundary-tags.md](../superpowers/plans/2026-07-22-visible-boundary-tags.md)
+**First vertical slice:**
 
-**Evidence required:** unit/property/contract/integration/smoke tests, coverage, compile, Ruff, mypy, deterministic simulation, governance checks, clean diff, and GitHub Actions.
+- exact 18+ fail-closed gate;
+- one-card discovery with pass, reciprocal interest, and suspected-bot report;
+- trusted synthetic reviewers with account-age, verification, standing, reputation, and
+  independent-cluster eligibility;
+- three-reviewer quorum with temporary discovery containment;
+- content-blind automated behavior risk as an independent second layer;
+- subject appeal and synthetic adjudication;
+- reciprocal synthetic match receipt.
 
-**Constraints:** Python-only project-authored code; synthetic fixtures only; strict storage allowlist; no production authorization; sources outside this repository remain read-only.
+**Explicitly deferred from the active UI:** Bluetooth proximity, matched location, Skin Shop,
+messaging pressure/limits, alignment questionnaire, and expanded identity/intent controls. Their
+domain foundations may remain, but dead or nonfunctional navigation must not.
 
-**Rollback:** the implementation is isolated on a feature branch and can be discarded without changing `main`.
+**Evidence required:** project-skill integrity, unit/property/contract/integration/smoke tests,
+browser acceptance, coverage, Ruff, mypy, deterministic simulation, governance checks, and scoped
+file review.
 
-**Approval status:** R&D repository publication is authorized by the user. Real-user features, production deployment, mobile-store submission, infrastructure, secrets, billing, BLE, and location collection are not authorized.
+**Constraints:** Python-only project-authored logic; synthetic fixtures only; strict storage
+allowlist; no private message/profile evidence in community review; no moderation reputation in
+dating rank; temporary containment only without human review; no production authorization;
+sources outside this repository remain read-only.
+
+**Rollback:** this branch inherits the uncommitted bot-control MVP working tree. Use the scoped
+handoff/file list for selective rollback; do not claim a clean polish-only diff or wholesale
+discard the working tree.
+
+**Approval status:** Local synthetic R&D is authorized. Real-user reporting or voting, permanent
+enforcement, production deployment, mobile-store submission, infrastructure, secrets, billing,
+BLE, and location collection are not authorized.

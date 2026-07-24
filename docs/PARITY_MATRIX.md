@@ -17,6 +17,9 @@
 | `rnd-crypto-node` | `adapters/crypto/identifiers.py` | Golden-vector verified; synthetic helper only |
 | `rnd-api` | `api/app.py` | Contract verified with in-memory store |
 | `rnd-simulator` | `simulation/run.py` | Deterministic output verified |
-| Expo orchestration | `application/session.py` + `desktop/app.py` | Recreated for laptop Tkinter R&D |
+| Expo orchestration | `application/session.py` + `web/app.py` | Focused server-rendered laptop flow |
+| New bot-control slice | `domain/bot_moderation.py` + `web/app.py` | Synthetic extension; not baseline parity |
 
-Verification uses unit, property, golden-vector, API contract, governance, and desktop smoke tests. These checks establish R&D behavior parity only; they do not close any real-user or production gate.
+Verification uses unit, property, golden-vector, API contract, governance, web integration, and
+headless-browser acceptance tests. These checks establish synthetic R&D behavior only; they do not
+close any real-user or production gate.

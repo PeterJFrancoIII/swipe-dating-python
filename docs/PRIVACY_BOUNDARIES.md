@@ -11,6 +11,11 @@
 
 ## Session-only
 
-Birth date and adult-gate result; credentials; intent; gender-feed settings; boundaries; ranking weights/history; questionnaire answers; decisions; likes; reciprocal fixtures; matches; opener tags; messages; transcripts; relationship phases and deeper answers; blocks; reports; proximity; encounters; location grants; identifiers; keys; secrets; payments; payouts; and the Matches tab.
+Birth date and adult-gate result; browser-session lookup; credentials; intent; gender-feed
+settings; boundaries; ranking weights/history; questionnaire answers; decisions; likes;
+reciprocal fixtures; matches; opener tags; messages; transcripts; relationship phases and deeper
+answers; blocks; bot reports; community votes; reviewer reputation; risk assessments; moderation
+cases and synthetic adjudications; proximity; encounters; location grants; identifiers; keys;
+secrets; payments; payouts; and the Matches screen.
 
 This R&D file is unencrypted and is not suitable for real users. A real-user build requires an externally reviewed encrypted vault, key custody, backup/recovery, transfer, deletion/export, corruption, reinstall, and key-loss behavior.

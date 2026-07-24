@@ -7,7 +7,22 @@ from collections.abc import Callable, Mapping
 from dataclasses import replace
 
 from swipe_dating.adapters.storage import LocalStateRepository
-from swipe_dating.domain.adult import is_adult_on
+from swipe_dating.domain.adult import is_adult_on, parse_date_only
+from swipe_dating.domain.bot_moderation import (
+    CommunityMember,
+    ModerationCase,
+    ModerationState,
+    ReportReason,
+    VoteChoice,
+    adjudicate_bot_case,
+    appeal_bot_case,
+    cast_bot_vote,
+    contained_profile_ids,
+    create_moderation_state,
+    eligible_reviewer_ids,
+    file_bot_report,
+    get_moderation_case,
+)
 from swipe_dating.domain.conversations import (
     ConversationState,
     Message,
@@ -55,7 +70,15 @@ from swipe_dating.domain.relationship_phases import (
     terminate_relationship_phase,
     withdraw_deepen_request,
 )
-from swipe_dating.fixtures import LOCAL_VIEWER, SKIN_ITEMS, SYNTHETIC_PROFILES
+from swipe_dating.domain.risk import assess_risk
+from swipe_dating.fixtures import (
+    LOCAL_VIEWER,
+    SKIN_ITEMS,
+    SYNTHETIC_BOT_SIGNALS,
+    SYNTHETIC_BOT_TRUTH,
+    SYNTHETIC_COMMUNITY_MEMBERS,
+    SYNTHETIC_PROFILES,
+)
 
 APP_TABS = ("Discover", "Matches", "My Profile", "Preferences", "Skin Shop", "Matched Map")
 
@@ -99,13 +122,19 @@ class ResearchSession:
 
         self.conversations: ConversationState = create_conversation_state()
         self.relationship_phases: RelationshipPhaseState = create_relationship_phase_state()
+        self.moderation_state: ModerationState = create_moderation_state(
+            SYNTHETIC_COMMUNITY_MEMBERS
+        )
         self._profiles = tuple(profiles)
         self._profiles_by_id = {profile.id: profile for profile in self._profiles}
 
     def accept_adult_gate(self, birth_date: str) -> None:
-        if not is_adult_on(birth_date, self.today):
+        normalized = birth_date.strip()
+        if parse_date_only(normalized) is None:
+            raise DomainError("birth_date_invalid")
+        if not is_adult_on(normalized, self.today):
             raise DomainError("adult_only")
-        self.birth_date = birth_date
+        self.birth_date = normalized
         self.adult_accepted = True
 
     def viewer(self) -> DiscoveryProfile:
@@ -138,7 +167,10 @@ class ResearchSession:
         return self.normalized_ranking_weights()
 
     def discovery_queue(self) -> tuple[RankedCandidate, ...]:
-        suppressed = set(get_suppressed_candidate_ids(self.conversations))
+        suppressed = {
+            *get_suppressed_candidate_ids(self.conversations),
+            *contained_profile_ids(self.moderation_state),
+        }
         return tuple(
             entry
             for entry in rank_discovery_candidates(
@@ -150,6 +182,9 @@ class ResearchSession:
     def current_candidate(self) -> RankedCandidate | None:
         queue = self.discovery_queue()
         return queue[0] if queue else None
+
+    def candidate_profile(self, candidate_id: str) -> DiscoveryProfile:
+        return self._candidate(candidate_id)
 
     def visible_starter_tags(self, candidate_id: str) -> tuple[str, ...]:
         candidate = self._candidate(candidate_id)
@@ -163,18 +198,21 @@ class ResearchSession:
         return self.reveal_stages.get(candidate_id, initial)
 
     def reveal_candidate(self, candidate_id: str, interaction: str) -> str:
+        self._require_candidate_not_contained(candidate_id)
         stage = advance_profile_reveal(self.reveal_stage(candidate_id), interaction)
         self.reveal_stages[candidate_id] = stage
         return stage
 
     def pass_candidate(self, candidate_id: str) -> Mapping[str, object]:
         self._require_adult()
+        self._require_candidate_not_contained(candidate_id)
         result = record_pass(self.conversations, candidate_id=candidate_id, at_ms=self.clock())
         self.conversations = result.state
         return result.outcome
 
     def express_interest(self, candidate_id: str, starter_tag: str) -> Mapping[str, object]:
         self._require_adult()
+        self._require_candidate_not_contained(candidate_id)
         candidate = self._candidate(candidate_id)
         if starter_tag not in self.visible_starter_tags(candidate_id):
             raise DomainError("shared_ground_not_visible")
@@ -189,6 +227,83 @@ class ResearchSession:
         if result.outcome.get("matched") is True:
             self.active_tab = "Matches"
         return result.outcome
+
+    def report_suspected_bot(
+        self,
+        candidate_id: str,
+        reason: ReportReason,
+    ) -> ModerationCase:
+        self._require_adult()
+        self._candidate(candidate_id)
+        signals = SYNTHETIC_BOT_SIGNALS.get(
+            candidate_id,
+            {
+                "adultCredentialValid": False,
+                "attestation": "missing",
+            },
+        )
+        result = file_bot_report(
+            self.moderation_state,
+            reporter_id=LOCAL_VIEWER.id,
+            subject_profile_id=candidate_id,
+            reason=reason,
+            risk_assessment=assess_risk(signals),
+            at_ms=self.clock(),
+        )
+        self.moderation_state = result.state
+        return result.value
+
+    def vote_on_bot_case(
+        self,
+        case_id: str,
+        reviewer_id: str,
+        choice: VoteChoice,
+    ) -> ModerationCase:
+        self._require_adult()
+        result = cast_bot_vote(
+            self.moderation_state,
+            case_id=case_id,
+            reviewer_id=reviewer_id,
+            choice=choice,
+            at_ms=self.clock(),
+        )
+        self.moderation_state = result.state
+        return result.value
+
+    def appeal_bot_containment(self, case_id: str) -> ModerationCase:
+        self._require_adult()
+        case = get_moderation_case(self.moderation_state, case_id)
+        result = appeal_bot_case(
+            self.moderation_state,
+            case_id=case_id,
+            subject_profile_id=case.report.subject_profile_id,
+        )
+        self.moderation_state = result.state
+        return result.value
+
+    def run_synthetic_adjudication(self, case_id: str) -> ModerationCase:
+        self._require_adult()
+        case = get_moderation_case(self.moderation_state, case_id)
+        try:
+            confirmed_bot = SYNTHETIC_BOT_TRUTH[case.report.subject_profile_id]
+        except KeyError as error:
+            raise DomainError("synthetic_truth_missing") from error
+        result = adjudicate_bot_case(
+            self.moderation_state,
+            case_id=case_id,
+            confirmed_bot=confirmed_bot,
+        )
+        self.moderation_state = result.state
+        return result.value
+
+    def moderation_cases(self) -> tuple[ModerationCase, ...]:
+        return tuple(self.moderation_state.cases.values())
+
+    def eligible_reviewers(self, case_id: str) -> tuple[CommunityMember, ...]:
+        return tuple(
+            self.moderation_state.members[reviewer_id]
+            for reviewer_id in eligible_reviewer_ids(self.moderation_state, case_id)
+        )
 
     def undo_last_decision(self) -> Mapping[str, object]:
         result = undo_last_decision(self.conversations)
@@ -399,6 +514,10 @@ class ResearchSession:
             return self._profiles_by_id[candidate_id]
         except KeyError as error:
             raise DomainError("candidate_not_found") from error
+
+    def _require_candidate_not_contained(self, candidate_id: str) -> None:
+        if candidate_id in contained_profile_ids(self.moderation_state):
+            raise DomainError("candidate_temporarily_contained")
 
     def _require_adult(self) -> None:
         if not self.adult_accepted:

@@ -44,3 +44,20 @@ def test_local_state_sanitizer_is_idempotent(
     assert sanitize_local_state(first) == first
     serialized = json.loads(serialize_local_state(first, now_ms=0))
     assert set(serialized) == {"schemaVersion", "savedAt", "profile", "cosmetics", "ui"}
+
+
+def test_local_state_sanitizer_trims_a_truncated_boundary() -> None:
+    source = {
+        "profile": {
+            "displayName": "",
+            "about": "",
+            "pronouns": f"{'0' * 39} 0",
+        },
+        "cosmetics": {"ownedSkinIds": [], "selectedSkinId": None},
+        "ui": {"hapticsEnabled": True, "lastTab": "Discover"},
+    }
+
+    first = sanitize_local_state(source)
+
+    assert first.profile.pronouns == "0" * 39
+    assert sanitize_local_state(first) == first

@@ -22,8 +22,11 @@ Recreate the consent-first Swipe Dating research behavior in one auditable Pytho
 ## Success criteria
 
 - behavior matches the JavaScript source baseline for all documented domain and HTTP contracts;
-- domain state transitions remain independent of FastAPI and Tkinter;
-- the laptop app covers the adult gate, discovery, matching, messaging, bilateral deepening, profile, preferences, mock Skin Shop, and safe matched-map placeholder;
+- domain state transitions remain independent of FastAPI and Jinja;
+- the active laptop web app covers the adult gate, discovery, trusted community bot review,
+  automated risk fallback, appeal, synthetic adjudication, and reciprocal matching;
+- broader messaging, relationship, profile, preference, marketplace, and location foundations
+  remain domain-only until selected as a focused later slice;
 - persistence is executable allowlist policy rather than a convention;
 - deterministic tests, type checks, lint, simulation, governance checks, and CI pass;
 - beta and production remain blocked.
